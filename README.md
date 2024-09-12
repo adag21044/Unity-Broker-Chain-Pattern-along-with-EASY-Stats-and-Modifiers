@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Unity project demonstrates the implementation of the Broker design pattern along with a simple stats and modifiers system. The project includes classes and components for managing and modifying stats, as well as basic cube movement and stat debugging.
+This Unity project demonstrates the implementation of the Broker Chain design pattern along with a simple stats and modifiers system. The project includes classes and components for managing and modifying stats, as well as basic cube movement and stat debugging.
 
 ## Project Structure
 
