@@ -1,44 +1,46 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class Stat 
 {
-    private float baseValue;
-    private readonly List<Func<float, float>> modifiers = new List<Func<float, float>>();
-    private readonly List<IStateObserver> observers = new List<IStateObserver>();
+    private float baseValue;    
+    private List<IModifier> modifiers = new List<IModifier>();
 
     public Stat(float baseValue)
     {
         this.baseValue = baseValue;
     }
 
-    public float Value
+    public float GetValue()
     {
-        get
+        float finalValue = baseValue;
+        
+        foreach(var modifier in modifiers)
         {
-            float finalValue = baseValue;
-            modifiers.ForEach(modifier => finalValue = modifier(finalValue));
-            return finalValue;
+            finalValue = modifier.Modify(finalValue);
         }
+
+        return finalValue;
     }
 
-    public void AddModifier(Func<float, float> modifier)
+    public void AddModifier(IModifier modifier)
     {
         modifiers.Add(modifier);
-        NotifyObservers();
+        UnityEngine.Debug.Log($"Modifier added: {modifier.GetType().Name}");
     }
 
-    public void AddObserver(IStateObserver observer)
+    public void RemoveModifier(IModifier modifier)
     {
-        observers.Add(observer);
-    }
-
-    private void NotifyObservers()
-    {
-        foreach (var observer in observers)
+        if(modifiers.Contains(modifier))
         {
-            observer.OnStatChanged();
+            modifiers.Remove(modifier);
+            UnityEngine.Debug.Log($"Modifier removed: {modifier.GetType().Name}");
+        }
+        else
+        {
+            UnityEngine.Debug.LogError($"Modifier not found:");
         }
     }
 }
