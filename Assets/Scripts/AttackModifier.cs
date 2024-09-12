@@ -1,6 +1,6 @@
 public class AttackModifier : IModifier
 {
-    private float attackBoost;
+    private readonly float attackBoost;
 
     public AttackModifier(float attackBoost)
     {

@@ -1,6 +1,6 @@
 public class DefenseModifier : IModifier
 {
-    private float defenseBoost;
+    private readonly float defenseBoost;
 
     public DefenseModifier(float defenseBoost)
     {
