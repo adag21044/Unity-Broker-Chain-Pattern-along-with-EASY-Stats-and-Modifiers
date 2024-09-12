@@ -2,21 +2,16 @@ using System.Collections.Generic;
 
 public class StatBroker 
 {
-    private readonly List<IStatModifier> modifers = new List<IStatModifier>();
+    private readonly List<IStatModifier> modifiers = new List<IStatModifier>();
 
     public void AddModifier(IStatModifier modifier)
     {
-        modifers.Add(modifier);
-    }
-
-    public void RemoveModifier(IStatModifier modifier)
-    {
-        modifers.Remove(modifier);
+        modifiers.Add(modifier);
     }
 
     public void ApplyModifiers(CharacterStats stats)
     {
-        foreach (var modifier in modifers)
+        foreach (var modifier in modifiers)
         {
             modifier.Modify(stats);
         }

@@ -10,14 +10,17 @@ public class GameManager : MonoBehaviour
         characterStats = FindObjectOfType<CharacterStats>();
         statBroker = new StatBroker();
 
-        // Modifiers
+        // Add modifiers
         statBroker.AddModifier(new HealthBuffModifier());
         statBroker.AddModifier(new AttackDebuffModifier());
 
-        // Apply modifiers
-        statBroker.ApplyModifiers(characterStats);
+        // Apply modifiers explicitly
+        ApplyModifiers();
+    }
 
-        // Print stats
+    public void ApplyModifiers()
+    {
+        statBroker.ApplyModifiers(characterStats);
         characterStats.PrintStats();
     }
 }

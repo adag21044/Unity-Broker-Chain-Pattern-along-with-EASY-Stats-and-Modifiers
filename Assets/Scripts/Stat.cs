@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-
+using UnityEngine;
 
 public class Stat 
 {
     private float baseValue;
     private readonly List<Func<float, float>> modifiers = new List<Func<float, float>>();
+    private readonly List<IStateObserver> observers = new List<IStateObserver>();
 
     public Stat(float baseValue)
     {
@@ -25,10 +26,19 @@ public class Stat
     public void AddModifier(Func<float, float> modifier)
     {
         modifiers.Add(modifier);
+        NotifyObservers();
     }
 
-    public void RemoveModifier(Func<float, float> modifier)
+    public void AddObserver(IStateObserver observer)
     {
-        modifiers.Remove(modifier);
+        observers.Add(observer);
+    }
+
+    private void NotifyObservers()
+    {
+        foreach (var observer in observers)
+        {
+            observer.OnStatChanged();
+        }
     }
 }
