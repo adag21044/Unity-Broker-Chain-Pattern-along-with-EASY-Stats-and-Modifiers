@@ -11,4 +11,6 @@ public class AttackModifier : IModifier
     {
         return value + attackBoost;
     }
+
+    public int GetPriority() => 1;
 }

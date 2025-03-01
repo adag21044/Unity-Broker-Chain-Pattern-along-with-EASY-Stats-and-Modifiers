@@ -7,6 +7,8 @@ public class DefenseModifier : IModifier
         this.defenseBoost = defenseBoost;
     }
 
+    public int GetPriority() => 3;
+
     public float Modify(float value)
     {
         return value + defenseBoost;
