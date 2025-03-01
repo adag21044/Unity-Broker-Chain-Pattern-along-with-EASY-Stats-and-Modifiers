@@ -1,64 +1,39 @@
-using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [System.Serializable]
 public class Stat 
 {
     [SerializeField] private float baseValue;    
-    private List<IModifier> modifiers = new List<IModifier>();
+    private Broker broker;
+    public float modifiedValue { get; private set; }
 
-    public Stat(float baseValue)
+    public Stat(float baseValue, Broker broker)
     {
         this.baseValue = baseValue;
+        this.broker = broker ?? throw new System.ArgumentNullException(nameof(broker));
+        modifiedValue = baseValue;
     }
 
     public float GetValue()
     {
-        float finalValue = baseValue;
-        
-        if (modifiers != null)  // Check if the list is not null
+        if (broker == null)
         {
-            foreach(var modifier in modifiers)
-            {
-                finalValue = modifier.Modify(finalValue);
-            }
+            Debug.LogError("Broker is null in Stat class!");
+            return baseValue;
         }
 
-        return finalValue;
+        modifiedValue = broker.ApplyModifiers(baseValue);
+        Debug.Log($"[STAT] Current Value: {modifiedValue}");
+        return modifiedValue;
     }
 
-    public void AddModifier(IModifier modifier)
+    public void UpdateStat(float deltaTime)
     {
-        if (modifier == null) 
-        {
-            Debug.LogError("Cannot add a null modifier");
-            return;
-        }
-
-        // Ensure the list is initialized
-        if (modifiers == null)
-        {
-            modifiers = new List<IModifier>();
-        }
-
-        modifiers.Add(modifier);
-        Debug.Log($"Modifier added: {modifier.GetType().Name}");
-    }
-
-    public void RemoveModifier(IModifier modifier)
-    {
-        if (modifier == null) 
-        {
-            Debug.LogError("Cannot remove a null modifier");
-            return;
-        }
-        if (modifiers.Remove(modifier))
-        {
-            Debug.Log($"Modifier removed: {modifier.GetType().Name}");
-        }
-        else
-        {
-            Debug.LogWarning($"Modifier not found: {modifier.GetType().Name}");
-        }
+        Debug.Log($"[STAT] Updating stats over time...");
+        broker?.UpdateModifiers(deltaTime);
+        GetValue();
     }
 }
