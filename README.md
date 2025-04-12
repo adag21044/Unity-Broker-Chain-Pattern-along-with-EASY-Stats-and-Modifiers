@@ -1,301 +1,111 @@
-# Unity Broker Chain Pattern along with EASY Stats and Modifiers
+# 🧠 Unity Broker Chain Pattern - Stats & Modifiers System
 
-## Overview
+This Unity sample project demonstrates the **Broker Chain Pattern** combined with an extendable **stat-modifier system**, inspired by **EASY stats architecture**. It is designed for educational purposes and provides a clear, modular example of how to build scalable stat logic in a game using SOLID principles and design patterns.
 
-This Unity project demonstrates the implementation of the Broker Chain design pattern along with a simple stats and modifiers system. The project includes classes and components for managing and modifying stats, as well as basic cube movement and stat debugging.
+---
 
-## Project Structure
+## 📌 Features
 
-The project is organized into the following main components:
+- 🧱 **Stat System**: Flexible base value handling with real-time modifier updates.
+- 🔗 **Broker Pattern**: Acts as a chain of responsibility to process stat modifiers.
+- 🔧 **Modifiers**: Modular stat modifiers (attack, defense, timed) with priority-based application.
+- ⏳ **Timed Modifier Support**: Expire modifiers after a set duration.
+- 🎮 **In-Game Trigger Handling**: Boost stats via interaction with tagged objects.
+- 📈 **Real-Time Debugging**: Outputs stat changes live in the console.
+- ✅ **Unity Editor Friendly**: Works seamlessly with `SerializeField` and `EditorUtility.SetDirty`.
 
-- **Modifiers**: Classes for modifying stats.
-- **Broker**: Manages a collection of stats.
-- **CubeManager**: Handles interactions and modifications for a cube.
-- **CubeMovement**: Manages cube movement.
-- **CubeStatDebugger**: Debugs and displays stat values over time.
-- **Stat**: Represents a stat with modifiers.
+---
 
-## Components
+## 📂 Folder Structure
 
-### Modifiers
+```
+Assets/
+│
+├── Scripts/
+│   ├── Broker.cs                # Handles and applies modifiers
+│   ├── IModifier.cs            # Modifier interface
+│   ├── Stat.cs                 # Represents a stat with broker support
+│   ├── AttackModifier.cs       # Concrete attack modifier
+│   ├── DefenseModifier.cs      # Concrete defense modifier
+│   ├── TimedModifier.cs        # Modifier with expiration logic
+│   ├── CubeManager.cs          # Initializes stats and handles triggers
+│   ├── CubeMovement.cs         # Basic player movement
+│   ├── CubeStatDebugger.cs     # Coroutine to print stat values periodically
+```
 
-- **`IModifier` Interface**
-  ```csharp
-  public interface IModifier 
-  {
-      float Modify(float value);       
-  }
-  ```
+---
 
-- **`AttackModifier` Class**
-  ```csharp
-  public class AttackModifier : IModifier 
-  {
-      private readonly float attackBoost;
-  
-      public AttackModifier(float attackBoost)
-      {
-          this.attackBoost = attackBoost;
-      }
-  
-      public float Modify(float value)
-      {
-          return value + attackBoost;
-      }
-  }
-  ```
+## 🚀 How It Works
 
-- **`DefenseModifier` Class**
-  ```csharp
-  public class DefenseModifier : IModifier
-  {
-      private readonly float defenseBoost;
-  
-      public DefenseModifier(float defenseBoost)
-      {
-          this.defenseBoost = defenseBoost;
-      }
-  
-      public float Modify(float value)
-      {
-          return value + defenseBoost;
-      }
-  }
-  ```
+### 1. **Stat Initialization**
+Stats like Attack and Defense are initialized with a base value and a shared `Broker` instance:
 
-### Broker
+```csharp
+attackStat = new Stat(50f, broker);
+```
 
-- **`Broker` Class**
-  ```csharp
-  using System.Collections.Generic;
-  using UnityEngine;
-  
-  public class Broker 
-  {
-      private readonly List<Stat> stats = new List<Stat>();
-  
-      public void AddStat(Stat stat)
-      {
-          if (stat == null)
-          {
-              Debug.LogError("Cannot add a null stat");
-              return;
-          }
-          stats.Add(stat);
-          Debug.Log("Stat added to broker");
-      }
-  
-      public void ProcessAllStats()
-      {
-          foreach (var stat in stats)
-          {
-              Debug.Log($"Stat value: {stat.GetValue()}");
-          }
-      }
-  }
-  ```
+### 2. **Modifier Application**
+When player triggers a power-up (e.g., tagged `AttackBoost`), the broker adds a new `AttackModifier`:
 
-### CubeManager
+```csharp
+broker.AddModifier(new AttackModifier(10f));
+```
 
-- **`CubeManager` Class**
-  ```csharp
-  using UnityEngine;
+### 3. **Modifier Priority System**
+Modifiers are applied in sorted order based on `GetPriority()`:
 
-  public class CubeManager : MonoBehaviour
-  {
-      private Stat attackStat;
-      private Stat defenseStat;
-      private Broker broker;
-  
-      void Start()
-      {
-          attackStat = new Stat(50f);
-          defenseStat = new Stat(50f);
-  
-          broker = new Broker();
-          broker.AddStat(attackStat);
-          broker.AddStat(defenseStat);
-  
-          Debug.Log("Cube initialized with Attack: " + attackStat.GetValue() + " Defense: " + defenseStat.GetValue());
-      }
-  
-      private void OnTriggerEnter(Collider other)
-      {
-          if(other.gameObject.CompareTag("AttackBoost"))
-          {
-              attackStat.AddModifier(new AttackModifier(10f));
-              Debug.Log("Attack boosted by 10");
-              Destroy(other.gameObject);
-          }
-          else if(other.gameObject.CompareTag("DefenseBoost"))
-          {
-              defenseStat.AddModifier(new DefenseModifier(10f));
-              Debug.Log("Defense boosted by 10");
-              Destroy(other.gameObject);
-          }
-      }
-  }
-  ```
+- `AttackModifier`: Priority 1
+- `TimedModifier`: Priority 2
+- `DefenseModifier`: Priority 3
 
-### CubeMovement
+This allows fine control over modifier application sequence.
 
-- **`CubeMovement` Class**
-  ```csharp
-  using UnityEngine;
+### 4. **Timed Modifier Logic**
+Timed modifiers update every frame and expire automatically after a duration:
 
-  public class CubeMovement : MonoBehaviour
-  {
-     public float moveSpeed = 5f; // Movement speed
- 
-     void Update()
-     {
-         // Read input for WASD keys
-         float moveX = Input.GetAxis("Horizontal"); // A and D keys (X axis)
-         float moveZ = Input.GetAxis("Vertical");   // W and S keys (Z axis)
- 
-         // Create movement vector
-         Vector3 move = new Vector3(moveX, 0, moveZ) * moveSpeed * Time.deltaTime;
- 
-         // Update cube's position
-         transform.Translate(move);
-     }
-  }
-  ```
+```csharp
+broker.UpdateModifiers(Time.deltaTime);
+```
 
-### CubeStatDebugger
+### 5. **Stat Updates and Debugging**
+Every frame:
+- Stats are re-evaluated
+- Console displays current values
+- Optional periodic debugger prints values every 5 seconds
 
-- **`CubeStatDebugger` Class**
-  ```csharp
-  using UnityEngine;
-  using System.Collections;
-  
-  public class CubeStatDebugger : MonoBehaviour
-  {
-      [SerializeField] private Stat attackStat;
-      [SerializeField] private Stat defenseStat;
-  
-      private void Start()
-      {
-          if (attackStat == null)
-              attackStat = new Stat(50f);  // Default attack value
-  
-          if (defenseStat == null)
-              defenseStat = new Stat(50f);  // Default defense value
-  
-          // Start coroutine for debugging stats
-          StartCoroutine(DebugStatsCoroutine());
-      }
-  
-      private IEnumerator DebugStatsCoroutine()
-      {
-          while (true)
-          {
-              if (attackStat == null || defenseStat == null)
-              {
-                  Debug.LogError("One or both stats are null!");
-              }
-              else
-              {
-                  Debug.Log($"Attack: {attackStat.GetValue()}");
-                  Debug.Log($"Defense: {defenseStat.GetValue()}");
-              }
-  
-              yield return new WaitForSeconds(5f);
-          }
-      }
-  
-      private void OnTriggerEnter(Collider other)
-      {
-          if (attackStat == null || defenseStat == null)
-          {
-              Debug.LogError("One or both stats are null!");
-              return;
-          }
-  
-          if (other.CompareTag("AttackBoost"))
-          {
-              attackStat.AddModifier(new AttackModifier(10f));
-              Debug.Log("Attack boosted by 10");
-              Destroy(other.gameObject);
-          }
-          else if (other.CompareTag("DefenseBoost"))
-          {
-              defenseStat.AddModifier(new DefenseModifier(10f));
-              Debug.Log("Defense boosted by 10");
-              Destroy(other.gameObject);
-          }
-      }
-  }
-  ```
+---
 
-### Stat
+## 🕹️ Controls
 
-- **`Stat` Class**
-  ```csharp
-  using System.Collections.Generic;
-  using UnityEngine;
- 
-  [System.Serializable]
-  public class Stat 
-  {
-     [SerializeField] private float baseValue;    
-     private List<IModifier> modifiers = new List<IModifier>();
- 
-     public Stat(float baseValue)
-     {
-         this.baseValue = baseValue;
-     }
- 
-     public float GetValue()
-     {
-         float finalValue = baseValue;
-         
-         if (modifiers != null)  // Check if the list is not null
-         {
-             foreach(var modifier in modifiers)
-             {
-                 finalValue = modifier.Modify(finalValue);
-             }
-         }
- 
-         return finalValue;
-     }
- 
-     public void AddModifier(IModifier modifier)
-     {
-         if (modifier == null) 
-         {
-             Debug.LogError("Cannot add a null modifier");
-             return;
-         }
- 
-         // Ensure the list is initialized
-         if (modifiers == null)
-         {
-             modifiers = new List<IModifier>();
-         }
- 
-         modifiers.Add(modifier);
-         Debug.Log($"Modifier added: {modifier.GetType().Name}");
-     }
- 
-     public void RemoveModifier(IModifier modifier)
-     {
-         if (modifier == null) 
-         {
-             Debug.LogError("Cannot remove a null modifier");
-             return;
-         }
-         if (modifiers.Remove(modifier))
-         {
-             Debug.Log($"Modifier removed: {modifier.GetType().Name}");
-         }
-         else
-         {
-             Debug.LogWarning($"Modifier not found: {modifier.GetType().Name}");
-         }
-     }
-  }
-  ```     
+- Use **arrow keys / WASD** to move the cube.
+- Touch or collide with:
+  - 🟥 `AttackBoost`: Adds `+10 Attack`
+  - 🟦 `DefenseBoost`: Adds `+10 Defense`
 
-  
+---
+
+## 🧪 Educational Value
+
+This project is a **great starting point** for understanding how to:
+
+- Chain modifiers using the Broker pattern
+- Prioritize modifier effects
+- Extend stat systems with time-based effects
+- Integrate gameplay objects with stat changes
+- Use good practices (SRP, OCP from SOLID) for game architecture
+
+---
+
+
+
+
+
+## 📘 License
+
+MIT License - free to use for learning and game prototypes.
+
+---
+
+## ✨ Credits
+
+Designed for teaching **game architecture**, **SOLID design**, and **modular stat handling** in Unity.
